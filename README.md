@@ -1,4 +1,4 @@
-# Cloud-Native Application Architecture
+# My Web Page Architecture
 
 ## Overview
 Welcome to the architectural breakdown of our cutting-edge cloud-native application, meticulously designed for performance, scalability, and reliability. This project showcases the integration of various tools and services, enabling robust infrastructure, efficient deployment, and seamless traffic management.
@@ -51,10 +51,5 @@ All infrastructure components are provisioned in AWS using Terraform, ensuring c
 
 ## Security and Monitoring
 Security and monitoring are emphasized at every level of the architecture. The private subnet shields sensitive resources, while Prometheus and Grafana provide comprehensive monitoring and visualization, ensuring the application remains secure and performant.
-
-## Diagram
-Explore the attached diagram to see how each component integrates seamlessly, providing a robust foundation for our innovative solutions.
-
----
 
 Feel free to explore, contribute, or use this architecture as a foundation for your own projects. This README provides an overview, but further documentation is available within the repository for more in-depth guidance.
