@@ -1,0 +1,79 @@
+
+
+### 2. Pull Jenkins Docker Image
+Open your terminal or command prompt and pull the official Jenkins Docker image:
+
+```bash
+docker pull jenkins/jenkins:lts
+```
+
+### 3. Run Jenkins Container
+Run the Jenkins container with port 8080 mapped to the host:
+
+```bash
+docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home --name my-jenkins-container jenkins/jenkins:lts
+```
+
+- `-p 8080:8080` maps the container's port 8080 to the host's port 8080.
+- `-p 50000:50000` maps the container's port 50000 to the host's port 50000 for agent communication.
+- `-v jenkins_home:/var/jenkins_home` mounts the `jenkins_home` directory to persist Jenkins data.
+- `--name my-jenkins-container` names the container.
+
+### 4. Initial Setup
+1. Open a browser and go to `http://localhost:8080`.
+2. Jenkins will ask for an initial admin password. Retrieve it from the container logs:
+
+```bash
+docker logs my-jenkins-container
+```
+
+Look for a line in the logs that contains the password:
+
+```
+*************************************************************
+*************************************************************
+*************************************************************
+
+Jenkins initial setup is required. An admin user has been created and a password generated.
+
+Please use the following password to proceed to installation:
+
+abcd1234efgh5678ijkl90mn
+
+This may also be found at: /var/jenkins_home/secrets/initialAdminPassword
+*************************************************************
+*************************************************************
+*************************************************************
+```
+
+3. Copy the password and paste it into the Jenkins setup page.
+4. Follow the setup wizard to complete the Jenkins installation.
+
+
+### 6. Configure Jenkins
+After the setup is complete, you can start configuring Jenkins to connect to GitHub and set up your pipelines.
+
+### Example Docker Command for Persistent Configuration
+To make the setup more robust, you can specify a custom directory for `jenkins_home`:
+
+```bash
+docker run -d -p 8080:8080 -p 50000:50000 -v /your/local/jenkins_home:/var/jenkins_home --name my-jenkins-container jenkins/jenkins:lts
+```
+
+Replace `/your/local/jenkins_home` with the path to a directory on your host system where you want to store Jenkins data.
+
+### Stopping and Starting Jenkins Container
+
+To stop the container:
+
+```bash
+docker stop my-jenkins-container
+```
+
+To start the container again:
+
+```bash
+docker start my-jenkins-container
+```
+
+With these steps, you should have Jenkins up and running in a Docker container on port 8080, ready for further configuration and use.
