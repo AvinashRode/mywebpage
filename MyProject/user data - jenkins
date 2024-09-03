@@ -1,0 +1,144 @@
+#!/bin/bash
+# Update the package index
+sudo yum update -y
+
+# Install Docker
+sudo amazon-linux-extras install docker -y
+
+# Start Docker service
+sudo service docker start
+
+# Add ec2-user to the docker group
+sudo usermod -a -G docker ec2-user
+
+# Enable Docker service to start on boot
+sudo systemctl enable docker
+
+# Pull Jenkins Docker image
+sudo docker pull jenkins/jenkins:lts
+
+# Run Jenkins container
+sudo docker run -d -p 8080:8080 -p 50000:50000 -v /jenkins_home:/var/jenkins_home --name jenkins jenkins/jenkins:lts
+
+------------------------------------------------------------------------------------------------
+
+#!/bin/bash
+# Update the package index
+sudo yum update -y
+
+# Install necessary packages
+sudo amazon-linux-extras install -y docker
+sudo yum install -y wget tar
+
+# Start Docker service
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+
+# Download Prometheus
+cd /tmp
+wget https://github.com/prometheus/prometheus/releases/download/v2.42.0/prometheus-2.42.0.linux-amd64.tar.gz
+
+# Extract Prometheus
+tar -xvf prometheus-2.42.0.linux-amd64.tar.gz
+cd prometheus-2.42.0.linux-amd64
+
+# Create Prometheus user and directories
+sudo useradd --no-create-home --shell /bin/false prometheus
+sudo mkdir -p /etc/prometheus
+sudo mkdir -p /var/lib/prometheus
+sudo chown prometheus:prometheus /var/lib/prometheus
+
+# Move Prometheus files to appropriate directories
+sudo mv prometheus /usr/local/bin/
+sudo mv promtool /usr/local/bin/
+sudo mv prometheus.yml /etc/prometheus/
+sudo mv consoles /etc/prometheus/
+sudo mv console_libraries /etc/prometheus/
+sudo chown -R prometheus:prometheus /etc/prometheus
+
+# Create Prometheus systemd service file
+sudo bash -c 'cat <<EOF > /etc/systemd/system/prometheus.service
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+  --config.file /etc/prometheus/prometheus.yml \
+  --storage.tsdb.path /var/lib/prometheus/ \
+  --web.console.templates=/etc/prometheus/consoles \
+  --web.console.libraries=/etc/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+# Reload systemd to apply the changes
+sudo systemctl daemon-reload
+
+# Start and enable Prometheus
+sudo systemctl start prometheus
+sudo systemctl enable prometheus
+
+# Open necessary ports in the firewall
+sudo iptables -I INPUT -p tcp --dport 9090 -j ACCEPT
+sudo service iptables save
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+#!/bin/bash
+
+# Update the package index
+sudo yum update -y
+
+# Add Grafana repository
+sudo tee /etc/yum.repos.d/grafana.repo <<EOF
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+EOF
+
+# Install Grafana
+sudo yum install grafana -y
+
+# Start and enable Grafana service
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+
+# Wait for Grafana to start
+sleep 10
+
+# Set default credentials
+GRAFANA_URL="http://localhost:3000"
+ADMIN_USER="admin"
+ADMIN_PASSWORD="admin"
+NEW_USER="newuser"
+NEW_USER_PASSWORD="newuserpassword"
+NEW_USER_EMAIL="newuser@example.com"
+
+# Use Grafana API to add a new user
+curl -X POST "${GRAFANA_URL}/api/admin/users" \
+     -H "Content-Type: application/json" \
+     -u "${ADMIN_USER}:${ADMIN_PASSWORD}" \
+     -d @- <<EOF
+{
+  "name": "${NEW_USER}",
+  "email": "${NEW_USER_EMAIL}",
+  "login": "${NEW_USER}",
+  "password": "${NEW_USER_PASSWORD}"
+}
+EOF
+
+echo "Grafana installation and user creation completed."
